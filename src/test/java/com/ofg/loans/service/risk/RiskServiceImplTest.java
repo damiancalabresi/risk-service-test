@@ -26,6 +26,12 @@ import java.time.LocalTime;
 @ContextConfiguration(classes = BeanConfig.class)
 public class RiskServiceImplTest {
 
+    private static String IP_ADDRESS_ONE = "192.168.1.1";
+    private static String IP_ADDRESS_TWO = "192.168.1.2";
+    private static String IP_ADDRESS_THREE = "192.168.1.3";
+    private static String IP_ADDRESS_FOUR = "192.168.1.4";
+    private static String IP_ADDRESS_FIVE = "192.168.1.5";
+
     @MockBean
     private TimeUtils timeUtils;
 
@@ -38,7 +44,7 @@ public class RiskServiceImplTest {
     @Before
     public void setUp() throws Exception {
         Mockito.when(timeUtils.getDateTime()).thenReturn(getLocalDateTimeFixedAfternoon());
-        Mockito.when(httpServletRequest.getRemoteAddr()).thenReturn("192.168.1.1");
+        Mockito.when(httpServletRequest.getRemoteAddr()).thenReturn(IP_ADDRESS_ONE);
     }
 
     @Test
@@ -54,6 +60,15 @@ public class RiskServiceImplTest {
     }
 
     @Test
+    public void testApproveBetweenZeroAndSixWithLessAmount() throws Exception {
+        Mockito.when(timeUtils.getDateTime()).thenReturn(getLocalDateTimeFixed3oClock());
+        LoanApplication loanApplication = getLoanApplicationCorrect();
+        loanApplication.setAmount(RiskService.MAXIMUM_LOAN_AMOUNT-1);
+        Boolean isApproved = service.approve(loanApplication);
+        Assert.assertEquals(Boolean.TRUE, isApproved);
+    }
+
+    @Test
     public void testApproveBetweenZeroAndSix() throws Exception {
         Mockito.when(timeUtils.getDateTime()).thenReturn(getLocalDateTimeFixed3oClock());
         LoanApplication loanApplication = getLoanApplicationCorrect();
@@ -62,9 +77,10 @@ public class RiskServiceImplTest {
     }
 
     @Test
-    public void testApproveMoreThanThreeApplicationsADay() throws Exception {
+    public void testApproveMaxAttemptADayExceeded() throws Exception {
+        Mockito.when(httpServletRequest.getRemoteAddr()).thenReturn(IP_ADDRESS_TWO);
         LoanApplication loanApplication = getLoanApplicationCorrect();
-        for (int i = 0; i < 3; i++) {
+        for (int i = 0; i < RiskService.MAXIMUM_ATTEMPTS_PER_IP_ADDRESS; i++) {
             Assert.assertEquals(Boolean.TRUE, service.approve(loanApplication));
         }
         Boolean isApproved = service.approve(loanApplication);
@@ -72,20 +88,22 @@ public class RiskServiceImplTest {
     }
 
     @Test
-    public void testApproveMoreThanThreeApplicationsADayDifferentIP() throws Exception {
+    public void testApproveMaxAttemptADayExceededDifferentIP() throws Exception {
+        Mockito.when(httpServletRequest.getRemoteAddr()).thenReturn(IP_ADDRESS_THREE);
         LoanApplication loanApplication = getLoanApplicationCorrect();
-        for (int i = 0; i < 3; i++) {
+        for (int i = 0; i < RiskService.MAXIMUM_ATTEMPTS_PER_IP_ADDRESS; i++) {
             Assert.assertEquals(Boolean.TRUE, service.approve(loanApplication));
         }
-        Mockito.when(httpServletRequest.getRemoteAddr()).thenReturn("192.168.2.2");
+        Mockito.when(httpServletRequest.getRemoteAddr()).thenReturn(IP_ADDRESS_FOUR);
         Boolean isApproved = service.approve(loanApplication);
         Assert.assertEquals(Boolean.TRUE, isApproved);
     }
 
     @Test
-    public void testApproveMoreThanThreeApplicationsDifferentDays() throws Exception {
+    public void testApproveMaxAttemptADayExceededDifferentDays() throws Exception {
+        Mockito.when(httpServletRequest.getRemoteAddr()).thenReturn(IP_ADDRESS_FIVE);
         LoanApplication loanApplication = getLoanApplicationCorrect();
-        for (int i = 0; i < 3; i++) {
+        for (int i = 0; i < RiskService.MAXIMUM_ATTEMPTS_PER_IP_ADDRESS; i++) {
             Assert.assertEquals(Boolean.TRUE, service.approve(loanApplication));
         }
         Mockito.when(timeUtils.getDateTime()).thenReturn(getLocalDateTimeFixedAfternoonOtherDay());
@@ -105,7 +123,7 @@ public class RiskServiceImplTest {
     }
 
     private LoanApplication getLoanApplicationCorrect() {
-        return new LoanApplication(new Client("James", "Norwe"), RiskService.MAXIMUM_LOAN_AMOUNT/2, 5);
+        return new LoanApplication(new Client("James", "Norwe"), RiskService.MAXIMUM_LOAN_AMOUNT, 5);
     }
 
     private LoanApplication getLoanApplicationWithAmountExceeded() {

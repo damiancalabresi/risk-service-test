@@ -33,7 +33,8 @@ Execute as a Java application:
 ## Testing
 In order to setup the test environment, I used the Spring test libraries.
 
-The class that provides the date and time is a bean inject into RiskService, so it can be mocked for the test using MockBean. The integration with Spring and Mockito.
+The class that provides the date and time is a bean injected into RiskService, so it can be mocked for the test using MockBean, an integration between Spring and Mockito.
+
 
 
 
