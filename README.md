@@ -28,7 +28,7 @@ Execute from Maven:
 
 Execute as a Java application:
 
-> java -jar transactions-queue-test.jar
+> java -jar junior-homework.jar
 
 ## Testing
 In order to setup the test environment, I used the Spring test libraries.
