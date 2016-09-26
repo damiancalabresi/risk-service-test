@@ -14,6 +14,7 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringRunner;
 
+import javax.servlet.http.HttpServletRequest;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -28,12 +29,16 @@ public class RiskServiceImplTest {
     @MockBean
     private TimeUtils timeUtils;
 
+    @MockBean
+    private HttpServletRequest httpServletRequest;
+
     @Autowired
     private RiskService service;
 
     @Before
     public void setUp() throws Exception {
-        Mockito.when(timeUtils.getDateTime()).thenReturn(getLocalDateTimeAfternoon());
+        Mockito.when(timeUtils.getDateTime()).thenReturn(getLocalDateTimeFixedAfternoon());
+        Mockito.when(httpServletRequest.getRemoteAddr()).thenReturn("192.168.1.1");
     }
 
     @Test
@@ -50,18 +55,53 @@ public class RiskServiceImplTest {
 
     @Test
     public void testApproveBetweenZeroAndSix() throws Exception {
-        Mockito.when(timeUtils.getDateTime()).thenReturn(getLocalDateTime3oClock());
+        Mockito.when(timeUtils.getDateTime()).thenReturn(getLocalDateTimeFixed3oClock());
         LoanApplication loanApplication = getLoanApplicationCorrect();
         Boolean isApproved = service.approve(loanApplication);
         Assert.assertEquals(Boolean.FALSE, isApproved);
     }
 
-    private LocalDateTime getLocalDateTime3oClock() {
-        return LocalDateTime.of(LocalDate.now(), LocalTime.of(3, 0));
+    @Test
+    public void testApproveMoreThanThreeApplicationsADay() throws Exception {
+        LoanApplication loanApplication = getLoanApplicationCorrect();
+        for (int i = 0; i < 3; i++) {
+            Assert.assertEquals(Boolean.TRUE, service.approve(loanApplication));
+        }
+        Boolean isApproved = service.approve(loanApplication);
+        Assert.assertEquals(Boolean.FALSE, isApproved);
     }
 
-    private LocalDateTime getLocalDateTimeAfternoon() {
-        return LocalDateTime.of(LocalDate.now(), LocalTime.of(15, 0));
+    @Test
+    public void testApproveMoreThanThreeApplicationsADayDifferentIP() throws Exception {
+        LoanApplication loanApplication = getLoanApplicationCorrect();
+        for (int i = 0; i < 3; i++) {
+            Assert.assertEquals(Boolean.TRUE, service.approve(loanApplication));
+        }
+        Mockito.when(httpServletRequest.getRemoteAddr()).thenReturn("192.168.2.2");
+        Boolean isApproved = service.approve(loanApplication);
+        Assert.assertEquals(Boolean.TRUE, isApproved);
+    }
+
+    @Test
+    public void testApproveMoreThanThreeApplicationsDifferentDays() throws Exception {
+        LoanApplication loanApplication = getLoanApplicationCorrect();
+        for (int i = 0; i < 3; i++) {
+            Assert.assertEquals(Boolean.TRUE, service.approve(loanApplication));
+        }
+        Mockito.when(timeUtils.getDateTime()).thenReturn(getLocalDateTimeFixedAfternoonOtherDay());
+        Assert.assertEquals(Boolean.TRUE, service.approve(loanApplication));
+    }
+
+    private LocalDateTime getLocalDateTimeFixed3oClock() {
+        return LocalDateTime.of(LocalDate.of(2016, 9, 15), LocalTime.of(3, 0));
+    }
+
+    private LocalDateTime getLocalDateTimeFixedAfternoon() {
+        return LocalDateTime.of(LocalDate.of(2016, 9, 15), LocalTime.of(15, 0));
+    }
+
+    private LocalDateTime getLocalDateTimeFixedAfternoonOtherDay() {
+        return getLocalDateTimeFixedAfternoon().withDayOfMonth(16);
     }
 
     private LoanApplication getLoanApplicationCorrect() {
