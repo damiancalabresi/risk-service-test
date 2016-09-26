@@ -9,6 +9,14 @@ public class Client {
 
     private String lastName;
 
+    public Client() {
+    }
+
+    public Client(String firstName, String lastName) {
+        this.firstName = firstName;
+        this.lastName = lastName;
+    }
+
     public String getFirstName() {
         return firstName;
     }
