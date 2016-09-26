@@ -1,20 +1,42 @@
 package com.ofg.loans.model;
 
-import com.ofg.loans.configuration.SwaggerConfig;
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.context.ConfigurableApplicationContext;
-import org.springframework.context.annotation.Import;
-
 /**
  * Loan application entity.
  */
-@SpringBootApplication
-@Import(SwaggerConfig.class)
 public class LoanApplication {
 
-    public static void main(String[] args) {
-        ConfigurableApplicationContext ctx = SpringApplication.run(LoanApplication.class, args);
+    private Client client;
+
+    private Integer amount;
+
+    // In days
+    private Integer term;
+
+    public LoanApplication() {
+    }
+
+    public Client getClient() {
+        return client;
+    }
+
+    public void setClient(Client client) {
+        this.client = client;
+    }
+
+    public Integer getAmount() {
+        return amount;
+    }
+
+    public void setAmount(Integer amount) {
+        this.amount = amount;
+    }
+
+    public Integer getTerm() {
+        return term;
+    }
+
+    public void setTerm(Integer term) {
+        this.term = term;
     }
 
 }
